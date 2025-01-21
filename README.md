@@ -77,3 +77,74 @@ Create your first JPA entity
 Easily start your REST Web Services
 
 [Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+<br><hr>
+
+Para esta aula, será necessário subir um container do Prometheus que irá se integrar a nossa aplicação Quarkus com Micrometer. Siga os passos abaixo:
+
+
+ ## Passo 1: Adicione a seguinte dependência no pom.xml 
+ ```xml 
+ <dependency> 
+     <groupId>io.quarkus</groupId> 
+     <artifactId>quarkus-micrometer-registry-prometheus</artifactId> 
+ </dependency> 
+ ``` 
+
+ ## Passo 2: Habilite a exposição de métricas no application.properties 
+ ```properties 
+ quarkus.micrometer.export.prometheus.path=/metrics
+ ``` 
+
+ ## Passo 3: Crie o arquivo de configuração do Prometheus na raiz do projeto 
+ ```yaml 
+ scrape_configs: 
+   - job_name: 'banking-service-app' 
+     scrape_interval: 5s 
+     metrics_path: '/metrics' 
+     static_configs: 
+       - targets: ['host.docker.internal:8080'] 
+ ``` 
+
+ ## Passo 4: Suba o container do Prometheus 
+ Execute o comando abaixo para iniciar o Prometheus com o arquivo de configuração: 
+
+ ### MacOS 
+ ```bash 
+ docker run -d --name prometheus \ 
+   -p 9090:9090 \ 
+   -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \ 
+   prom/prometheus 
+ ``` 
+
+ ### Windows 
+ ```bash 
+ docker run -d --name prometheus -p 9090:9090 -v C:/Users/PCESTUDIO/Workspace/banking-service/banking-service/prometheus.yaml:/etc/prometheus/prometheus.yml prom/prometheus 
+ ``` 
+
+ Obs: Lembrando que o nome PCESTUDIO é do computador que estou usando. No seu caso, você precisa alterar esse nome para o da sua máquina. 
+
+ Agora, o Prometheus estará acessível em http://localhost:9090 e estará coletando métricas da aplicação Quarkus em execução localmente. 
+
+ Nota: O endpoint host.docker.internal funciona para conexões entre o Docker e a máquina local no Windows e macOS. 
+
+ ## Passo 5: Suba o container do Grafana 
+ Com o container do Prometheus iniciado, execute o comando para iniciar o Grafana: 
+
+ ```bash 
+ docker run -d --name grafana -p 3000:3000 grafana/grafana 
+ ``` 
+
+ O Grafana estará acessível em http://localhost:3000 com as credenciais abaixo: 
+
+ - Usuário padrão: admin 
+ - Senha padrão: admin 
+
+ Você será solicitado a redefinir a senha na primeira vez que fizer login. 
+
+ ## Passo 6: Configure o Prometheus como fonte de dados no Grafana 
+ 1. Acesse o Grafana em http://localhost:3000. 
+ 2. Faça login com o usuário e senha padrão. 
+ 3. Vá para Configuration > Data Sources no menu lateral. 
+ 4. Clique em Add data source e selecione Prometheus. 
+ 5. Configure a URL do Prometheus: http://host.docker.internal:9090 (tanto no Windows quanto no macOS). 
+ 6. Clique em Save & Test. Se estiver configurado corretamente, o Grafana indicará que a conexão foi bem-sucedida. 
